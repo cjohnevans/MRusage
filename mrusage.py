@@ -3,6 +3,8 @@
 
 import csv
 import matplotlib.pyplot as plt
+import datetime
+import numpy as np
 
 fname = 'mri_activity_dec_2021.csv'
 
@@ -12,11 +14,10 @@ class Booking:
         # lists, with values from each booking
         self.booking_dict = []
         self.filename = filename
-        print self.filename
         
     def read_csv(self):
 # read csv data into dict_import
-        print 'filename: ' + self.filename
+        print('filename: ' + self.filename)
         with open(self.filename, 'r') as csvfile:
             csvread = csv.DictReader(csvfile)
             for row in csvread:
@@ -38,12 +39,15 @@ class Resource:
         self.start_date = []
         self.finish_date = []
         self.duration_minutes = []
+        self.duration_hours = []
         self.booking_description = []
         self.cancellation_date = []
         self.cancellation_notice_length_days = []
         self.cancellation_notice_length_verbose = []
         self.cancellation_reason = []
         self.cancellation_comments = []
+        self.booking_datetime = []  # list of datetime objects
+        self.booking_week_num = []
 
 # get the resource specific bookings
     def get_bookings(self, booking_dict):
@@ -60,6 +64,7 @@ class Resource:
                 self.start_date.append(row['start_date'])
                 self.finish_date.append(row['finish_date'])
                 self.duration_minutes.append(int(row['duration_minutes']))
+                self.duration_hours.append(float(row['duration_minutes'])/60.0)
                 self.booking_description.append(row['booking_description'])
                 self.cancellation_date.append(row['cancellation_date'])
                 self.cancellation_notice_length_days.append(row['cancellation_notice_length_days'])
@@ -67,30 +72,55 @@ class Resource:
                 self.cancellation_reason.append(row['project'])
                 self.cancellation_comments.append(row['project'])
 
-                self.date_yymmdd = []
-
-    def calc_datetime(self):
+    def calc_booking_date(self):
         # take date part and split y, m, d
         for ii in self.start_date:
-            datetmp = ii[0:10].split('-') # string
-            datetmp2 = []
-            for jj in datetmp:
-                datetmp2.append(int(jj))
-            print datetmp
-            print type(datetmp)
-            self.date_yymmdd.append(datetmp2)
+            datetmp = ii[0:10].split('-') # date string
+            timetmp = ii[11:].split(':') # time string
+#            print(datetmp)
+#            print(timetmp)
+#            datetmp2 = []
+#            for jj in datetmp:
+#                datetmp2.append(int(jj))
+#            self.date_yymmdd.append(datetmp2)
+            datetime_tmp = datetime.datetime( int(datetmp[0]), int(datetmp[1]), int(datetmp[2]), \
+                                          int(timetmp[0]), int(timetmp[1]), int(timetmp[2]) )
+#            print('datetime_tmp = ')
+#            print(datetime_tmp)
+#            print(type(datetime_tmp))
+            self.booking_datetime.append(datetime_tmp)
+            self.booking_week_num.append(datetime_tmp.isocalendar()[1])
+
+#        print(self.booking_datetime)
+#        print(self.booking_week_num)
+
+#   calculate the total booked hours by week number within the year
+    def calc_bookings_weeknum(self):
+#        use lowest and highest week numbers in the data
+        week_num = range(min(self.booking_week_num), max(self.booking_week_num))
+        print week_num
+        booking_week_hours_true = []
+        for wk in week_num:
+            # include hours if booking is a member of week_num
+            print(wk)
+            print(self.booking_week_num)
+            booking_week_hours_true = np.where(self.booking_week_num == wk, self.duration_hours, 0)
+            print(self.duration_hours)
+            print("booking_week_hours_true ")
+            print(type(booking_week_hours_true))
+            print(booking_week_hours_true)
+                                           
         
     def show_bookings(self):
-        print self.project[2]
-        print self.start_date
-        print self.duration_minutes
-        print self.date_yymmdd
+#        print self.project[2]
+#        print self.start_date
+#        print self.duration_minutes
 
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(1,1,1)
-        print(range(0, len(self.duration_minutes)))
+#        print(range(0, len(self.duration_minutes)))
         ax1.plot(range(0, len(self.duration_minutes)) , self.duration_minutes )
-        plt.show()
+#        plt.show()
 
 
 dec_bookings = Booking(fname)
@@ -98,5 +128,6 @@ dec_bookings.read_csv()
 
 prisma_west = Resource('3TW')
 prisma_west.get_bookings(dec_bookings.booking_dict)
-prisma_west.calc_datetime()
+prisma_west.calc_booking_date()
 prisma_west.show_bookings()
+prisma_west.calc_bookings_weeknum()
