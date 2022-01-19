@@ -145,14 +145,17 @@ class BookingFilter:
         print("debug_num_fields " + str(num_fields))
 
 #currently local.  should be a new class for summary data?
-def show_bookings_approved_cancelled(date_axis1, duration1, date_axis2, duration2, resource):
-    fig1 = plt.figure()
-    ax1 = fig1.add_subplot(1,1,1)
-    ax1.plot(date_axis1 , duration1, date_axis2, duration2 )
-    plt.title(resource)
-    ax1.set_label(['Approved','Cancelled'])
-    plt.legend()
-    plt.show(block=True)        
+def show_bookings(week_axis, hours, scanner_list, booking_status):
+    nn=1
+    fig1 = plt.figure()    
+    for scanner in scanner_list:
+        ax1 = fig1.add_subplot(2,2,nn)
+        ax1.plot(week_axis[scanner]['APPROVED'], hours[scanner]['APPROVED'], \
+                                 week_axis[scanner]['CANCELLED'], hours[scanner]['CANCELLED'])
+        plt.title(scanner)
+        plt.legend(['Approved','Cancelled'])
+        nn=nn+1
+    plt.show()  
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
@@ -169,6 +172,7 @@ for scanner in scanner_list:
     # are the hours
     hours[scanner] = {} # define each 3TE, 3TW, ... key as a dict
     week_axis[scanner]={}
+    ii=1
     for status in booking_status:
         scanner_hours = BookingFilter(scanner, status)
         scanner_hours.get_bookings(dec_bookings.booking_dict)
@@ -176,16 +180,5 @@ for scanner in scanner_list:
         # populate a dict with the form hours[scanner][status] = [... list of hours values ...]
         hours[scanner][status] = hrs #define the booking_status key and populate values from list hrs.
         week_axis[scanner][status] = wk    
-    show_bookings_approved_cancelled(week_axis[scanner]['APPROVED'], hours[scanner]['APPROVED'], \
-                                     week_axis[scanner]['CANCELLED'], hours[scanner]['CANCELLED'], \
-                                     [scanner])
 
-##prisma_west_approved = BookingFilter('3TW', 'APPROVED')
-##prisma_west_approved.get_bookings(dec_bookings.booking_dict)
-##(wk1, hrs_app) = prisma_west_approved.calc_bookings_weeknum()
-##
-##prisma_west_cancelled = BookingFilter('3TW', 'CANCELLED')
-##prisma_west_cancelled.get_bookings(dec_bookings.booking_dict)
-##(wk2, hrs_can) = prisma_west_cancelled.calc_bookings_weeknum()
-##
-##show_bookings_approved_cancelled(wk1, hrs_app, wk2, hrs_can, '3TW')
+show_bookings(week_axis, hours, scanner_list, booking_status)
