@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 
-fname = 'mri_activity_dec_2021.csv'
+#fname = 'mri_activity_dec_2021.csv'
+fname = 'mri_activity_aprnov_2021.csv'
+
 
 # class for a single input csv file (could be several, one month each)
 class Booking:
@@ -77,11 +79,24 @@ class Resource:
         # take date part and split y, m, d
         week_num = [] # as list
         for ii in self.start_date:
-            datetmp = ii[0:10].split('-') # date string
-            timetmp = ii[11:].split(':') # time string
-
-            datetime_tmp = datetime.datetime( int(datetmp[0]), int(datetmp[1]), int(datetmp[2]), \
-                                          int(timetmp[0]), int(timetmp[1]), int(timetmp[2]) )
+            date_tmp = ii[0:10]
+            print date_tmp
+            if '-' in date_tmp:  # yyyy-mm-dd format
+                print "yyyy-mm-dd format"
+                date_split = date_tmp.split('-') # date string
+            elif '/' in date_tmp: # dd/mm/yyy format
+                print "dd/mm/yyyy format"
+                date_split_rev = date_tmp.split('/')
+                date_split = date_split_rev[::-1] #reverse
+            else:
+                print "dunno" 
+            time_tmp = ii[11:]
+            time_split = time_tmp.split(':') 
+            if len(time_split) == 2:  # handle missing ss in hh:mm format
+                time_split.append('0')
+            # date_split needs to be [yyyy, mm, dd]
+            datetime_tmp = datetime.datetime( int(date_split[0]), int(date_split[1]), int(date_split[2]), \
+                                          int(time_split[0]), int(time_split[1]), int(time_split[2]) )    
             self.booking_datetime.append(datetime_tmp)
             week_num.append(datetime_tmp.isocalendar()[1]) #list
         self.booking_week_num = np.array(week_num) # np array
@@ -96,18 +111,9 @@ class Resource:
             # include hours if booking is a member of week_num
             booking_week_hours_true = np.where(self.booking_week_num == wk, \
                                                self.duration_hours, 0)
-#            print(booking_week_hours_true)
             week_hours.append(np.sum(booking_week_hours_true))
-#            print week_hours
         return (week_num, week_hours)
         
-    def show_bookings(self):
-        fig1 = plt.figure()
-        ax1 = fig1.add_subplot(1,1,1)
-#        print(range(0, len(self.duration_minutes)))
-        ax1.plot(range(0, len(self.duration_minutes)) , self.duration_minutes )
-#        plt.show()
-
     def debug_num_fields(self):
         num_fields = [len(self.resource_name), \
                       len(self.resource),\
@@ -133,7 +139,12 @@ class Resource:
                       ]
         print("debug_num_fields " + str(num_fields))
 
-        
+#currently local.  should be a new class for summary data?
+def show_bookings(date_axis, duration):
+    fig1 = plt.figure()
+    ax1 = fig1.add_subplot(1,1,1)
+    ax1.plot(date_axis , duration )
+    plt.show()        
 
 dec_bookings = Booking(fname)
 dec_bookings.read_csv()
@@ -141,8 +152,6 @@ dec_bookings.read_csv()
 prisma_west = Resource('3TW')
 prisma_west.get_bookings(dec_bookings.booking_dict)
 prisma_west.calc_booking_date()
-prisma_west.show_bookings()
 prisma_west.debug_num_fields()
 (wk, hrs) = prisma_west.calc_bookings_weeknum()
-print(wk)
-print(hrs)
+show_bookings(wk, hrs)
