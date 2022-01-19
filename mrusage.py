@@ -50,13 +50,20 @@ class BookingFilter:
         self.cancellation_comments = []
         self.booking_datetime = []  # list of datetime objects
         self.booking_week_num = []
+        self.project_list = [] #set with unique project names
  
 # get the resource specific bookings
     def get_bookings(self, booking_dict):
         tmp_duration_hours = [] #list
         for row in booking_dict:
-            if row['resource'] == self.resource_name_filter:
-                if row['booking_status'] == self.booking_status_filter:
+#            if row['resource'] == self.resource_name_filter:
+#                if row['booking_status'] == self.booking_status_filter:
+#            if self.resource_name_filter is blank, return all values
+            if (self.resource_name_filter == 'all') or (row['resource'] == self.resource_name_filter):
+#                print("got into resource filter")
+#                print(self.resource_name_filter == 'all')
+#                print(row['resource'] == self.resource_name_filter)
+                if (self.booking_status_filter == 'all') or (row['booking_status'] == self.booking_status_filter):
                     self.start_date.append(row['start_date'])
                     self.project.append(row['project'])
                     self.booking_status.append(row['booking_status'])
@@ -76,6 +83,8 @@ class BookingFilter:
                     self.cancellation_comments.append(row['project'])
         self.duration_hours = np.array(tmp_duration_hours)
         self.calc_booking_date()
+        self.project_list = set(self.project)
+        print(self.project_list)
 
     def calc_booking_date(self):
         # take date part and split y, m, d
@@ -109,15 +118,21 @@ class BookingFilter:
         # use lowest and highest week numbers in the data
         week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
         booking_week_hours = []
-        booking_week_approved_hours = []
         week_hours = []
-        week_approved_hours = []
         for wk in week_num:
             # include hours if booking is a member of week_num
             booking_week_hours = np.where(self.booking_week_num == wk, \
                                                self.duration_hours, 0)
             week_hours.append(np.sum(booking_week_hours))
         return (week_num, week_hours)
+
+    # total the hours per project.  Can be all scanners, or scanner-specific, depending on the filter
+    # applied to the BookingFilter class
+    def calc_bookings_project(self):
+        week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
+        booking_week_hours = []
+##########  need to implement calculation by project in here #######    
+
         
     def debug_num_fields(self):
         num_fields = [len(self.resource_name_filter), \
@@ -145,16 +160,22 @@ class BookingFilter:
         print("debug_num_fields " + str(num_fields))
 
 #currently local.  should be a new class for summary data?
-def show_bookings(week_axis, hours, scanner_list, booking_status):
+def show_bookings_by_scanner(week_axis, hours, scanner_list, booking_status):
     nn=1
+    hours_max = 0
     fig1 = plt.figure()    
     for scanner in scanner_list:
+        for status in booking_status:
+            if max(hours[scanner][status]) > hours_max:
+                hours_max = max(hours[scanner][status])
         ax1 = fig1.add_subplot(2,2,nn)
+        ax1.set_ylim(0, hours_max)
         ax1.plot(week_axis[scanner]['APPROVED'], hours[scanner]['APPROVED'], \
                                  week_axis[scanner]['CANCELLED'], hours[scanner]['CANCELLED'])
         plt.title(scanner)
         plt.legend(['Approved','Cancelled'])
         nn=nn+1
+    print(hours_max)
     plt.show()  
 
 dec_bookings = BookingSource(fname)
@@ -181,4 +202,7 @@ for scanner in scanner_list:
         hours[scanner][status] = hrs #define the booking_status key and populate values from list hrs.
         week_axis[scanner][status] = wk    
 
-show_bookings(week_axis, hours, scanner_list, booking_status)
+show_bookings_by_scanner(week_axis, hours, scanner_list, booking_status)
+
+project_hours = BookingFilter('all', 'all')
+
