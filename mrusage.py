@@ -91,12 +91,15 @@ class Resource:
         # use lowest and highest week numbers in the data
         week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
         booking_week_hours_true = []
+        week_hours = []
         for wk in week_num:
-            print(wk)
             # include hours if booking is a member of week_num
             booking_week_hours_true = np.where(self.booking_week_num == wk, \
                                                self.duration_hours, 0)
-            # insert sum here....                                         
+#            print(booking_week_hours_true)
+            week_hours.append(np.sum(booking_week_hours_true))
+#            print week_hours
+        return (week_num, week_hours)
         
     def show_bookings(self):
         fig1 = plt.figure()
@@ -140,4 +143,6 @@ prisma_west.get_bookings(dec_bookings.booking_dict)
 prisma_west.calc_booking_date()
 prisma_west.show_bookings()
 prisma_west.debug_num_fields()
-prisma_west.calc_bookings_weeknum()
+(wk, hrs) = prisma_west.calc_bookings_weeknum()
+print(wk)
+print(hrs)
