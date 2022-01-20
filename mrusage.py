@@ -6,28 +6,30 @@ import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 
-#fname = 'mri_activity_dec_2021.csv'
-fname = 'mri_activity_aprnov_2021.csv'
+fname = 'mri_activity_dec_2021.csv'
+#fname = 'mri_activity_aprnov_2021.csv'
 
 
-# class for a single input csv file (could be several, one month each)
+# class for a single input csv file (could be several, each with different timespan)
 class BookingSource:
     def __init__ (self, filename) :
         # lists, with values from each booking
         self.booking_dict = []
         self.filename = filename
-        
+
+    # read csv data 
     def read_csv(self):
-# read csv data into dict_import
         print('filename: ' + self.filename)
         with open(self.filename, 'r') as csvfile:
             csvread = csv.DictReader(csvfile)
             for row in csvread:
                 self.booking_dict.append(row)
 
-# object containing all bookings for a given 
+# object containing all bookings for a given filter
+# for example, all APPROVED bookings on 3TW
 class BookingFilter:
     def __init__ (self, resource_name_filter, booking_status_filter):
+        # variables are lists with [variable_booking1, variable_booking2, ...]
         self.resource_name_filter = resource_name_filter
         self.booking_status_filter = booking_status_filter
         self.resource = []
@@ -52,17 +54,13 @@ class BookingFilter:
         self.booking_week_num = []
         self.project_list = [] #set with unique project names
  
-# get the resource specific bookings
+    # popluate the variable in BookingFilter class, from bookings matching the filter.
     def get_bookings(self, booking_dict):
         tmp_duration_hours = [] #list
         for row in booking_dict:
-#            if row['resource'] == self.resource_name_filter:
-#                if row['booking_status'] == self.booking_status_filter:
-#            if self.resource_name_filter is blank, return all values
+            # include booking if resource matches the filter of if resource set to 'all'
             if (self.resource_name_filter == 'all') or (row['resource'] == self.resource_name_filter):
-#                print("got into resource filter")
-#                print(self.resource_name_filter == 'all')
-#                print(row['resource'] == self.resource_name_filter)
+                # include booking if status matches filter or if booking is set to 'all'
                 if (self.booking_status_filter == 'all') or (row['booking_status'] == self.booking_status_filter):
                     self.start_date.append(row['start_date'])
                     self.project.append(row['project'])
@@ -84,7 +82,6 @@ class BookingFilter:
         self.duration_hours = np.array(tmp_duration_hours)
         self.calc_booking_date()
         self.project_list = set(self.project)
-        print(self.project_list)
 
     def calc_booking_date(self):
         # take date part and split y, m, d
@@ -111,11 +108,14 @@ class BookingFilter:
                                           int(time_split[0]), int(time_split[1]), int(time_split[2]) )    
             self.booking_datetime.append(datetime_tmp)
             week_num.append(datetime_tmp.isocalendar()[1]) #list
+            #print(week_num)
         self.booking_week_num = np.array(week_num) # np array
 
     # calculate the total booked hours by week number within the year
     def calc_bookings_weeknum(self):
         # use lowest and highest week numbers in the data
+        if(not np.any(self.booking_week_num)):
+            return([], []) # return empty lists for week_num and week_hours if no bookings match the filter.
         week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
         booking_week_hours = []
         week_hours = []
@@ -126,83 +126,60 @@ class BookingFilter:
             week_hours.append(np.sum(booking_week_hours))
         return (week_num, week_hours)
 
-    # total the hours per project.  Can be all scanners, or scanner-specific, depending on the filter
+    # total the hours per project.  Can be all resources, or resource-specific, depending on the filter
     # applied to the BookingFilter class
     def calc_bookings_project(self):
         week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
         booking_week_hours = []
-##########  need to implement calculation by project in here #######    
-
+        ##########  need to implement calculation by project in here #######    
         
-    def debug_num_fields(self):
-        num_fields = [len(self.resource_name_filter), \
-                      len(self.resource),\
-                      len(self.project),\
-                      len(self.booking_status),\
-                      len(self.booker),\
-                      len(self.owner), \
-                      len(self.project_type), \
-##        self.booking_type
-##        self.repeat_type
-                      len(self.start_date), \
-##        self.finish_date
-                      len(self.duration_minutes),\
-                      len(self.duration_hours), \
-                      len(self.booking_description), \
-##        self.cancellation_date
-##        self.cancellation_notice_length_days
-##        self.cancellation_notice_length_verbose
-##        self.cancellation_reason
-##        self.cancellation_comments
-##        self.booking_datetime
-##        self.booking_week_num
-                      ]
-        print("debug_num_fields " + str(num_fields))
-
-#currently local.  should be a new class for summary data?
-def show_bookings_by_scanner(week_axis, hours, scanner_list, booking_status):
+#currently local.  Could be a new class for summary data?
+def show_bookings_by_resource(week_axis, hours, resource_list, booking_status, plot_rows, plot_cols):
     nn=1
     hours_max = 0
     fig1 = plt.figure()    
-    for scanner in scanner_list:
+    for resource in resource_list:
         for status in booking_status:
-            if max(hours[scanner][status]) > hours_max:
-                hours_max = max(hours[scanner][status])
-        ax1 = fig1.add_subplot(2,2,nn)
+            print(hours[resource][status])
+            if(hours[resource][status]):
+                if max(hours[resource][status]) > hours_max:
+                    hours_max = max(hours[resource][status])
+        print(hours_max)
+        ax1 = fig1.add_subplot(plot_rows,plot_cols,nn)
         ax1.set_ylim(0, hours_max)
-        ax1.plot(week_axis[scanner]['APPROVED'], hours[scanner]['APPROVED'], \
-                                 week_axis[scanner]['CANCELLED'], hours[scanner]['CANCELLED'])
-        plt.title(scanner)
-        plt.legend(['Approved','Cancelled'])
+        ax1.plot(week_axis[resource]['APPROVED'], hours[resource]['APPROVED'], \
+                                 week_axis[resource]['CANCELLED'], hours[resource]['CANCELLED'])
+        plt.title(resource)
+        if(nn == 1):
+            plt.legend(['Approved','Cancelled'])
         nn=nn+1
-    print(hours_max)
+#    print(hours_max)
     plt.show()  
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
 
-scanner_list = ['3TW', '3TE', '7T', '3TM' ]
+resource_list = ['3TM', '3TE', '7T', '3TW', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
 booking_status = ['APPROVED','CANCELLED']
 
 hours = {}   # empty dict
 week_axis = {}   # empty dict
 
-for scanner in scanner_list:
-    # hours is a dict where the top level key is the scanner type.  Each value is itself a dict
+for resource in resource_list:
+    # hours is a dict where the top level key is the resource type.  Each value is itself a dict
     # with keys APPROVED and CANCELLED, and the value associated with APPROVED or CANCELLED
     # are the hours
-    hours[scanner] = {} # define each 3TE, 3TW, ... key as a dict
-    week_axis[scanner]={}
+    hours[resource] = {} # define each 3TE, 3TW, ... key as a dict
+    week_axis[resource]={}
     ii=1
     for status in booking_status:
-        scanner_hours = BookingFilter(scanner, status)
-        scanner_hours.get_bookings(dec_bookings.booking_dict)
-        (wk, hrs) = scanner_hours.calc_bookings_weeknum()
-        # populate a dict with the form hours[scanner][status] = [... list of hours values ...]
-        hours[scanner][status] = hrs #define the booking_status key and populate values from list hrs.
-        week_axis[scanner][status] = wk    
+        resource_hours = BookingFilter(resource, status)  #redefinition of resource_hours here - is this OK?
+        resource_hours.get_bookings(dec_bookings.booking_dict)
+        (wk, hrs) = resource_hours.calc_bookings_weeknum()
+        # populate a dict with the form hours[resource][status] = [... list of hours values ...]
+        hours[resource][status] = hrs #define the booking_status key and populate values from list hrs.
+        week_axis[resource][status] = wk    
 
-show_bookings_by_scanner(week_axis, hours, scanner_list, booking_status)
+show_bookings_by_resource(week_axis, hours, resource_list, booking_status,2,4)
 
-project_hours = BookingFilter('all', 'all')
 
