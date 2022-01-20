@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import datetime
 import numpy as np
 
-fname = 'mri_activity_dec_2021.csv'
+#fname = 'mri_activity_dec_2021.csv'
 #fname = 'mri_activity_aprnov_2021.csv'
-
+fname = 'mri_activity_2021aprdec_all.csv'
 
 # class for a single input csv file (could be several, each with different timespan)
 class BookingSource:
@@ -73,7 +73,10 @@ class BookingFilter:
                     self.finish_date.append(row['finish_date'])
                     self.duration_minutes.append(row['duration_minutes']) # str
                     tmp_duration_hours.append(float(row['duration_minutes'])/60.0) #list
-                    self.booking_description.append(row['booking_description'])
+                    if 'booking_description' in row:
+                        self.booking_description.append(row['booking_description'])
+                    elif 'description' in row:
+                        self.booking_description.append(row['description'])                        
                     self.cancellation_date.append(row['cancellation_date'])
                     self.cancellation_notice_length_days.append(row['cancellation_notice_length_days'])
                     self.cancellation_notice_length_verbose.append(row['cancellation_notice_length_verbose'])
@@ -94,7 +97,7 @@ class BookingFilter:
                 date_split_rev = date_tmp.split('/')
                 date_split = date_split_rev[::-1] #reverse
             else:
-                print "Unrecognised date format." 
+                print("Unrecognised date format.") 
             time_tmp = ii[11:]
             time_split = time_tmp.split(':') 
             if len(time_split) == 3:
@@ -102,7 +105,7 @@ class BookingFilter:
             elif len(time_split) == 2:  # handle missing ss in hh:mm format
                 time_split.append('0')
             else:
-                print "Unrecognised time format."
+                print("Unrecognised time format.")
             # date_split needs to be [yyyy, mm, dd]
             datetime_tmp = datetime.datetime( int(date_split[0]), int(date_split[1]), int(date_split[2]), \
                                           int(time_split[0]), int(time_split[1]), int(time_split[2]) )    
@@ -137,14 +140,12 @@ class BookingFilter:
 def show_bookings_by_resource(week_axis, hours, resource_list, booking_status, plot_rows, plot_cols):
     nn=1
     hours_max = 0
-    fig1 = plt.figure()    
+    fig1 = plt.figure()
     for resource in resource_list:
         for status in booking_status:
-            print(hours[resource][status])
             if(hours[resource][status]):
-                if max(hours[resource][status]) > hours_max:
+                if max(hours[resource][status]) > hours_max:  #BUG:  only calculates the max so far.
                     hours_max = max(hours[resource][status])
-        print(hours_max)
         ax1 = fig1.add_subplot(plot_rows,plot_cols,nn)
         ax1.set_ylim(0, hours_max)
         ax1.plot(week_axis[resource]['APPROVED'], hours[resource]['APPROVED'], \
@@ -159,7 +160,7 @@ def show_bookings_by_resource(week_axis, hours, resource_list, booking_status, p
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
 
-resource_list = ['3TM', '3TE', '7T', '3TW', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
+resource_list = ['3TE', '3TW', '7T', '3TM', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
 booking_status = ['APPROVED','CANCELLED']
 
 hours = {}   # empty dict
