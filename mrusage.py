@@ -86,6 +86,9 @@ class BookingFilter:
         self.calc_booking_date()
         self.project_list = set(self.project)
 
+    # May need to repeat this for start and end dates.  Could make this a fn which has the list start_date (or end_date)
+    # passed to it, and it returns the (i) booking date in datetime format, and (ii) the booking week no.
+    # i.e. in get_bookings: self.booking_datetime = calc_booking_date(self.start_date)
     def calc_booking_date(self):
         # take date part and split y, m, d
         week_num = [] # as list
