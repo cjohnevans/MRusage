@@ -139,7 +139,7 @@ class BookingFilter:
 #currently local.  Could be a new class for summary data?
 def show_bookings_by_resource(week_axis, hours, resource_list, booking_status, plot_rows, plot_cols):
     nn=1
-    hours_max = 0
+    hours_max = 60 # default to 60hours max
     fig1 = plt.figure()
     for resource in resource_list:
         for status in booking_status:
