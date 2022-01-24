@@ -8,7 +8,8 @@ import numpy as np
 
 #fname = 'mri_activity_dec_2021.csv'
 #fname = 'mri_activity_aprnov_2021.csv'
-fname = 'mri_activity_2021aprdec_all.csv'
+# this is the utf-8 encoded version:
+fname = 'mri_activity_2021aprdec_all_b.csv'
 
 
 #### class BookingSource ############################################################################
@@ -150,19 +151,14 @@ class BookingAnalyse:
         self.week_num = week_num
         self.week_hours = week_hours
         return (week_num, week_hours)
-    
-    def show_bookings_by_resource(self, resource_list, booking_status, plot_rows, plot_cols):
-        nn=1
+
+    def plot_hours(self):
         hours_max = 60 # default to 60hours max
         fig1 = plt.figure()
-        ax1 = fig1.add_subplot(plot_rows,plot_cols,nn)
+        ax1 = fig1.add_subplot(1,1,1)
         ax1.set_ylim(0, hours_max)
-        ax1.plot(self.week_num, self.week_hours, \
-                                 self.week_num, self.week_hours)
+        ax1.plot(self.week_num, self.week_hours)
         plt.title(resource)
-        if(nn == 1):
-            plt.legend(['Approved','Cancelled'])
-        nn=nn+1
         plt.show()
 
 ###   Placeholder for  def calc_bookings_project(self): ##################################
@@ -170,6 +166,21 @@ class BookingAnalyse:
 
 
 #### main() ##############################################################################
+#  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
+def show_bookings_by_resource(approved, cancelled):
+    nn=1
+    hours_max = 60 # default to 60hours max
+
+    fig1 = plt.figure()
+    ax1 = fig1.add_subplot(1,1,1)
+    ax1.set_ylim(0, hours_max)
+    ax1.plot(approved.week_num , approved.week_hours, \
+                             cancelled.week_num, cancelled.week_hours)
+    plt.title(resource)
+    if(nn == 1):
+        plt.legend(['Approved','Cancelled'])
+    nn=nn+1
+    plt.show()
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
@@ -194,6 +205,8 @@ for resource in resource_list:
     
     booking_list_cancelled[resource] = BookingFilter(resource, 'CANCELLED')
     booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
-    
-    booking_analysis_approved[resource].show_bookings_by_resource(resource_list, booking_status,2,4)
+
+    booking_analysis_approved[resource].plot_hours()
+
+show_bookings_by_resource(booking_analysis_approved['3TW'], booking_analysis_cancelled['3TW'])
 
