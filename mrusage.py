@@ -179,23 +179,21 @@ booking_status = ['APPROVED','CANCELLED']
 
 hours = {}   # empty dict
 week_axis = {}   # empty dict
+booking_list_approved = {}  # a dict of BookingFilter objects
+booking_analysis_approved = {}   # a list of BookingAnalysis objects
+booking_list_cancelled = {}  # a dict of BookingFilter objects
+booking_analysis_cancelled = {}   # a list of BookingAnalysis objects
 
 for resource in resource_list:
-    # hours is a list of dicts where the list is by resource type.  Each element in the list is a dict
-    # with keys APPROVED and CANCELLED, and the value associated with APPROVED or CANCELLED
-    # are the hours
-    hours[resource] = {} # define each 3TE, 3TW, ... key as a dict
-    week_axis[resource]={}
-    ii=1
-    for status in booking_status:
-        booking_list = BookingFilter(resource, status)  #redefinition of booking_list here - is this OK?
-        booking_list.get_bookings(dec_bookings.booking_dict)
-        booking_analysis = BookingAnalyse(booking_list)
-        (wk, hrs) = booking_analysis.calc_bookings_weeknum(booking_list)
-        booking_analysis.show_bookings_by_resource(resource_list, booking_status,2,4)
-        # populate a dict with the form hours[resource][status] = [... list of hours values ...]
-        hours[resource][status] = hrs #define the booking_status key and populate values from list hrs.
-        week_axis[resource][status] = wk    
-
-#show_bookings_by_resource(resource_list, booking_status,2,4)
+    # calls get_bookings function from the resource-specific instance of the BookingFilter class
+    # booking_list_approved.
+    booking_list_approved[resource] = BookingFilter(resource, 'APPROVED')
+    booking_list_approved[resource].get_bookings(dec_bookings.booking_dict)
+    booking_analysis_approved[resource] = BookingAnalyse(booking_list_approved[resource])
+    booking_analysis_approved[resource].calc_bookings_weeknum(booking_list_approved[resource])
+    
+    booking_list_cancelled[resource] = BookingFilter(resource, 'CANCELLED')
+    booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
+    
+    booking_analysis_approved[resource].show_bookings_by_resource(resource_list, booking_status,2,4)
 
