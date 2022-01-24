@@ -10,6 +10,8 @@ import numpy as np
 #fname = 'mri_activity_aprnov_2021.csv'
 fname = 'mri_activity_2021aprdec_all.csv'
 
+
+#### class BookingSource ############################################################################
 # class for a single input csv file (could be several, each with different timespan)
 class BookingSource:
     def __init__ (self, filename) :
@@ -25,6 +27,7 @@ class BookingSource:
             for row in csvread:
                 self.booking_dict.append(row)
 
+#### class BookingFilter ############################################################################
 # object containing all bookings for a given filter
 # for example, all APPROVED bookings on 3TW
 class BookingFilter:
@@ -117,48 +120,56 @@ class BookingFilter:
             #print(week_num)
         self.booking_week_num = np.array(week_num) # np array
 
-    # calculate the total booked hours by week number within the year
-    def calc_bookings_weeknum(self):
-        # use lowest and highest week numbers in the data
-        if(not np.any(self.booking_week_num)):
-            return([], []) # return empty lists for week_num and week_hours if no bookings match the filter.
-        week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
-        booking_week_hours = []
-        week_hours = []
-        for wk in week_num:
-            # include hours if booking is a member of week_num
-            booking_week_hours = np.where(self.booking_week_num == wk, \
-                                               self.duration_hours, 0)
-            week_hours.append(np.sum(booking_week_hours))
-        return (week_num, week_hours)
-
     # total the hours per project.  Can be all resources, or resource-specific, depending on the filter
     # applied to the BookingFilter class
     def calc_bookings_project(self):
         week_num = range(min(self.booking_week_num), max(self.booking_week_num)+1)
         booking_week_hours = []
-        ##########  need to implement calculation by project in here #######    
-        
-#currently local.  Could be a new class for summary data?
-def show_bookings_by_resource(week_axis, hours, resource_list, booking_status, plot_rows, plot_cols):
-    nn=1
-    hours_max = 60 # default to 60hours max
-    fig1 = plt.figure()
-    for resource in resource_list:
-        for status in booking_status:
-            if(hours[resource][status]):
-                if max(hours[resource][status]) > hours_max:  #BUG:  only calculates the max so far.
-                    hours_max = max(hours[resource][status])
+        ##########  need to implement calculation by project in here #######
+
+#### class BookingAnalyse #####################################################
+# object to analyse the data recovered from BookingFilter.
+class BookingAnalyse:
+    def __init__(self, booking_filter_list):
+        print(booking_filter_list)
+        self.week_num = []
+        self.week_hours = []
+    
+    def calc_bookings_weeknum(self, booking_filter_list):
+        # use lowest and highest week numbers in the data
+        if(not np.any(booking_filter_list.booking_week_num)):
+            return([], []) # return empty lists for week_num and week_hours if no bookings match the filter.
+        week_num = range(min(booking_filter_list.booking_week_num), max(booking_filter_list.booking_week_num)+1)
+        booking_week_hours = []
+        week_hours = []
+        for wk in week_num:
+            # include hours if booking is a member of week_num
+            booking_week_hours = np.where(booking_filter_list.booking_week_num == wk, \
+                                               booking_filter_list.duration_hours, 0)
+            week_hours.append(np.sum(booking_week_hours))
+        self.week_num = week_num
+        self.week_hours = week_hours
+        return (week_num, week_hours)
+    
+    def show_bookings_by_resource(self, resource_list, booking_status, plot_rows, plot_cols):
+        nn=1
+        hours_max = 60 # default to 60hours max
+        fig1 = plt.figure()
         ax1 = fig1.add_subplot(plot_rows,plot_cols,nn)
         ax1.set_ylim(0, hours_max)
-        ax1.plot(week_axis[resource]['APPROVED'], hours[resource]['APPROVED'], \
-                                 week_axis[resource]['CANCELLED'], hours[resource]['CANCELLED'])
+        ax1.plot(self.week_num, self.week_hours, \
+                                 self.week_num, self.week_hours)
         plt.title(resource)
         if(nn == 1):
             plt.legend(['Approved','Cancelled'])
         nn=nn+1
-#    print(hours_max)
-    plt.show()  
+        plt.show()
+
+###   Placeholder for  def calc_bookings_project(self): ##################################
+#    def calc_bookings_project(self):
+
+
+#### main() ##############################################################################
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
@@ -170,20 +181,21 @@ hours = {}   # empty dict
 week_axis = {}   # empty dict
 
 for resource in resource_list:
-    # hours is a dict where the top level key is the resource type.  Each value is itself a dict
+    # hours is a list of dicts where the list is by resource type.  Each element in the list is a dict
     # with keys APPROVED and CANCELLED, and the value associated with APPROVED or CANCELLED
     # are the hours
     hours[resource] = {} # define each 3TE, 3TW, ... key as a dict
     week_axis[resource]={}
     ii=1
     for status in booking_status:
-        resource_hours = BookingFilter(resource, status)  #redefinition of resource_hours here - is this OK?
-        resource_hours.get_bookings(dec_bookings.booking_dict)
-        (wk, hrs) = resource_hours.calc_bookings_weeknum()
+        booking_list = BookingFilter(resource, status)  #redefinition of booking_list here - is this OK?
+        booking_list.get_bookings(dec_bookings.booking_dict)
+        booking_analysis = BookingAnalyse(booking_list)
+        (wk, hrs) = booking_analysis.calc_bookings_weeknum(booking_list)
+        booking_analysis.show_bookings_by_resource(resource_list, booking_status,2,4)
         # populate a dict with the form hours[resource][status] = [... list of hours values ...]
         hours[resource][status] = hrs #define the booking_status key and populate values from list hrs.
         week_axis[resource][status] = wk    
 
-show_bookings_by_resource(week_axis, hours, resource_list, booking_status,2,4)
-
+#show_bookings_by_resource(resource_list, booking_status,2,4)
 
