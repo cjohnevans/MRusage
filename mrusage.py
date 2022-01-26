@@ -132,7 +132,6 @@ class BookingFilter:
 # object to analyse the data recovered from BookingFilter.
 class BookingAnalyse:
     def __init__(self, booking_filter_list):
-        print(booking_filter_list)
         self.week_num = []
         self.week_hours = []
     
@@ -167,26 +166,30 @@ class BookingAnalyse:
 
 #### main() ##############################################################################
 #  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
-def show_bookings_by_resource(approved, cancelled):
+def show_bookings_by_resource(week_num, week_hours, plot_rows, plot_cols, title):
     nn=1
     hours_max = 60 # default to 60hours max
 
     fig1 = plt.figure()
-    ax1 = fig1.add_subplot(1,1,1)
+    ax1 = fig1.add_subplot(1,plot_rows,plot_cols)
     ax1.set_ylim(0, hours_max)
-    ax1.plot(approved.week_num , approved.week_hours, \
-                             cancelled.week_num, cancelled.week_hours)
-    plt.title(resource)
-    if(nn == 1):
-        plt.legend(['Approved','Cancelled'])
+    print(week_num.keys())
+    for resource in week_num.keys():
+        ax1.plot(week_num[resource] , week_hours[resource])
+        if(nn == 1):
+            plt.legend(week_num.keys())
     nn=nn+1
+    plt.title(title)
     plt.show()
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
 
-resource_list = ['3TE', '3TW', '7T', '3TM', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
+#resource_list = ['3TE', '3TW', '7T', '3TM', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
+scanner_list = ['3TE', '3TW', '7T', '3TM']
+operator_list = [ 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans' ]
 booking_status = ['APPROVED','CANCELLED']
+resource_list = scanner_list
 
 hours = {}   # empty dict
 week_axis = {}   # empty dict
@@ -202,11 +205,12 @@ for resource in resource_list:
     booking_list_approved[resource].get_bookings(dec_bookings.booking_dict)
     booking_analysis_approved[resource] = BookingAnalyse(booking_list_approved[resource])
     booking_analysis_approved[resource].calc_bookings_weeknum(booking_list_approved[resource])
-    
     booking_list_cancelled[resource] = BookingFilter(resource, 'CANCELLED')
     booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
+#    booking_analysis_approved[resource].plot_hours()
 
-    booking_analysis_approved[resource].plot_hours()
-
-show_bookings_by_resource(booking_analysis_approved['3TW'], booking_analysis_cancelled['3TW'])
+# dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
+week_numbers = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
+week_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
+show_bookings_by_resource(week_numbers, week_hours, 1, 1, 'Scanners')
 
