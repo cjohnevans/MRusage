@@ -178,13 +178,13 @@ def bookings_stacked_bar(x_data, y_data, title):
         if temp > x_axis_points:
             x_axis_points = temp
 
-    start_height = [0] * x_axis_points  # starting height or stacked bar
+    start_height = [0] * x_axis_points  # list of zeroes with length x_axis_points  
 
     fig, ax = plt.subplots()
     ax.set_ylim(0, hours_max)
     for series in x_data.keys():
         ax.bar(x_data[series] , y_data[series], bottom = start_height)
-        # work out starting point for next bar series.
+        # work out starting point for next bar series, by list comprehension.
         start_height = [start_height[jj] + y_data[series][jj] for jj in range(len(start_height))]
     plt.legend(x_data.keys())
     plt.title(title)
