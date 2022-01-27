@@ -188,7 +188,7 @@ def bookings_stacked_bar(x_data, y_data, title):
         start_height = [start_height[jj] + y_data[series][jj] for jj in range(len(start_height))]
     plt.legend(x_data.keys())
     plt.title(title)
-    plt.show()
+    plt.show(block=False)
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
