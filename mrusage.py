@@ -163,6 +163,17 @@ class BookingAnalyse:
 ###   Placeholder for  def calc_bookings_project(self): ##################################
 #    def calc_bookings_project(self):
 
+class BookingOptimise:
+    def load_template(self, filename):
+        '''
+        load cvs in the format given by booking_template.csv 
+        '''
+        filename = 'booking_template.csv'
+        print('filename: ' + filename)
+        with open(filename, 'r') as csvfile:
+            csvread = csv.DictReader(csvfile)
+            for row in csvread:
+                self.booking_dict.append(row)        
 
 #### main() ##############################################################################
 #  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
