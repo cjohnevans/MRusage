@@ -249,11 +249,11 @@ for resource in resource_list:
     booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
 #    booking_analysis_approved[resource].plot_hours()
 
+print(booking_analysis_approved['3TW'].week_num)
+
 # dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
 scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
 scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
 bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
 
-optimiser = BookingOptimise()
-optimiser.load_template('booking_template.csv')
 
