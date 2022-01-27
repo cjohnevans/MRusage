@@ -160,9 +160,7 @@ class BookingAnalyse:
         plt.title(resource)
         plt.show()
 
-###   Placeholder for  def calc_bookings_project(self): ##################################
-#    def calc_bookings_project(self):
-
+###   BookingOptimise #################################################################
 class BookingOptimise:
     def load_template(self, filename):
         '''
