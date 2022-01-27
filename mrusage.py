@@ -177,19 +177,27 @@ class BookingOptimise:
 
 #### main() ##############################################################################
 #  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
-def show_bookings_by_resource(week_num, week_hours, plot_rows, plot_cols, title):
-    nn=1
-    hours_max = 60 # default to 60hours max
+def bookings_stacked_bar(x_data, y_data, title):
+    '''
+    stacked bar plot of x_data vs y_data.  both x_data and y_data are dicts with resource titles as keys.
+    '''
+    hours_max = 120 # default max
+    x_axis_points = 0
 
-    fig1 = plt.figure()
-    ax1 = fig1.add_subplot(1,plot_rows,plot_cols)
-    ax1.set_ylim(0, hours_max)
-    print(week_num.keys())
-    for resource in week_num.keys():
-        ax1.plot(week_num[resource] , week_hours[resource])
-        if(nn == 1):
-            plt.legend(week_num.keys())
-    nn=nn+1
+    for series in x_data.keys():
+        temp = len(x_data[series])
+        if temp > x_axis_points:
+            x_axis_points = temp
+
+    start_height = [0] * x_axis_points  # list of zeroes with length x_axis_points  
+
+    fig, ax = plt.subplots()
+    ax.set_ylim(0, hours_max)
+    for series in x_data.keys():
+        ax.bar(x_data[series] , y_data[series], bottom = start_height)
+        # work out starting point for next bar series, by list comprehension.
+        start_height = [start_height[jj] + y_data[series][jj] for jj in range(len(start_height))]
+    plt.legend(x_data.keys())
     plt.title(title)
     plt.show()
 
@@ -221,7 +229,7 @@ for resource in resource_list:
 #    booking_analysis_approved[resource].plot_hours()
 
 # dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
-week_numbers = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
-week_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
-show_bookings_by_resource(week_numbers, week_hours, 1, 1, 'Scanners')
+scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
+scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
+bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
 
