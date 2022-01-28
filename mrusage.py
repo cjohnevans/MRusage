@@ -5,6 +5,7 @@ import csv
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
+import finder
 
 #fname = 'mri_activity_dec_2021.csv'
 #fname = 'mri_activity_aprnov_2021.csv'
@@ -160,41 +161,6 @@ class BookingAnalyse:
         plt.title(resource)
         plt.show()
 
-###   BookingOptimise #################################################################
-class BookingOptimise:
-    def load_template(self, filename):
-        '''
-        load cvs in the format given by booking_template.csv 
-        '''
-        template_dict = []  # dictionary version, from csv file
-        template = [] #list/numpy array? for use in the optimiser/locator
-        
-        print('filename: ' + filename)
-        with open(filename, 'r') as csvfile:
-            # need the next few lines to deal with whitespaces in key.  Explicitly send this to DictReader
-            header = csvfile.readline().split(',')
-            header = [header[idx].strip() for idx in range(0,len(header)) ]
-            print(header)
-            csvread = csv.DictReader(csvfile, fieldnames=header)
-            for row in csvread:
-                print(row)
-                template_dict.append(row) #as a dictionary 
-
-        # express as lists
-        nslots = len(template_dict)
-        template_resources = header
-        for slot in range(0,nslots):
-            print(slot)
-            print(template)
-            template.append(list(template_dict[slot].values()))
-
-        print(template_resources)
-        print(template)
-
-        # this is a numpy array of STRINGS - need to convert to ints for the booking locator.
-        test = np.array(template)
-        print(test)
-        print(type(test[0][0]))
         
 #### main() ##############################################################################
 #  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
@@ -233,7 +199,7 @@ resource_list = scanner_list
 
 hours = {}   # empty dict
 week_axis = {}   # empty dict
-booking_list_approved = {}  # a dict of BookingFilter objects
+booking_list_approved = {}  # a dict of BookingFilter object
 booking_analysis_approved = {}   # a list of BookingAnalysis objects
 booking_list_cancelled = {}  # a dict of BookingFilter objects
 booking_analysis_cancelled = {}   # a list of BookingAnalysis objects
@@ -255,5 +221,8 @@ print(booking_analysis_approved['3TW'].week_num)
 scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
 scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
 bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
+
+test_finder_2 = finder.BookingFinder()
+print(test_finder_2.empty_fn())
 
 
