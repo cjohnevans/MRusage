@@ -61,6 +61,14 @@ class BookingFilter:
  
     # popluate the variable in BookingFilter class, from bookings matching the filter.
     def get_bookings(self, booking_dict):
+        '''
+        input:   dict from BookingSource
+        
+        output:  populate the booking info in the BookingFilter object, subject to matching
+                   the appropriate filters (resource, status)
+
+        todo:    add time filter to set a date range of bookings to return
+        '''
         tmp_duration_hours = [] #list
         for row in booking_dict:
             # include booking if resource matches the filter of if resource set to 'all'
