@@ -84,12 +84,18 @@ class BookingFinder:
 
         return resource_availability
 
-    def find_slot(self):
+    def find_slot(self, required, available):
         '''
-        input: two numpy arrays - template and resource_free (availability)
+        input: two numpy arrays - required (template requirement) and available (from bookings)
         and works out the available slots
         output: list of slots
         '''
+
+        print(required)
+        print(available)
+        fig, ax = plt.subplots()
+        ax.imshow(available, cmap='gray')
+        plt.show()
         
         return 
 
@@ -97,10 +103,8 @@ class BookingFinder:
 
 ###   main() #################################################################
 test_finder = BookingFinder()
-template = test_finder.load_availability('finder_template.csv')
-print(template)
+template = test_finder.load_availability('template_availability.csv')
 resource = test_finder.get_availability(True)
 #need some error trapping here
-print(resource)
-
+test_finder.find_slot(template, resource)
 
