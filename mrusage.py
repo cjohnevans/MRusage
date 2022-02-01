@@ -5,6 +5,7 @@ import csv
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
+import finder
 
 #fname = 'mri_activity_dec_2021.csv'
 #fname = 'mri_activity_aprnov_2021.csv'
@@ -60,6 +61,14 @@ class BookingFilter:
  
     # popluate the variable in BookingFilter class, from bookings matching the filter.
     def get_bookings(self, booking_dict):
+        '''
+        input:   dict from BookingSource
+        
+        output:  populate the booking info in the BookingFilter object, subject to matching
+                   the appropriate filters (resource, status)
+
+        todo:    add time filter to set a date range of bookings to return
+        '''
         tmp_duration_hours = [] #list
         for row in booking_dict:
             # include booking if resource matches the filter of if resource set to 'all'
@@ -160,10 +169,7 @@ class BookingAnalyse:
         plt.title(resource)
         plt.show()
 
-###   Placeholder for  def calc_bookings_project(self): ##################################
-#    def calc_bookings_project(self):
-
-
+        
 #### main() ##############################################################################
 #  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
 def bookings_stacked_bar(x_data, y_data, title):
@@ -204,7 +210,7 @@ resource_list = scanner_list
 
 hours = {}   # empty dict
 week_axis = {}   # empty dict
-booking_list_approved = {}  # a dict of BookingFilter objects
+booking_list_approved = {}  # a dict of BookingFilter object
 booking_analysis_approved = {}   # a list of BookingAnalysis objects
 booking_list_cancelled = {}  # a dict of BookingFilter objects
 booking_analysis_cancelled = {}   # a list of BookingAnalysis objects
@@ -219,6 +225,8 @@ for resource in resource_list:
     booking_list_cancelled[resource] = BookingFilter(resource, 'CANCELLED')
     booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
 #    booking_analysis_approved[resource].plot_hours()
+
+print(booking_analysis_approved['3TW'].week_num)
 
 # dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
 scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
@@ -245,5 +253,7 @@ operator_stacked_hours = { resource: operator_analysis[resource].week_hours for 
 print('operator_stacked_ axes and hours')
 print(operator_stacked_axes)
 print(operator_stacked_hours)
-bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours,'Hours booked per week, by operator')
+bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours,'Hours booked per week, by operatortest_finder_2 = finder.BookingFinder()
+print(test_finder_2.empty_fn())
+
 
