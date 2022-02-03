@@ -81,6 +81,8 @@ class BookingFinder:
         else:
             # get resource_availability from BookingFinder calculation
             pass
+        #  need to add unavailable hours at the end of each day to prevent
+        #  bookings crossing overnight.
 
         return resource_availability
 
@@ -95,22 +97,12 @@ class BookingFinder:
         '''
         av_rows, av_cols = available.shape
         n_cols = av_cols*n_weeks  # n_cols = total n columns in plot
-        print('av_rows, av_cols')
-        print(av_rows, av_cols)
-        print('n_rows, n_cols')
-        print(n_rows, n_cols)
         # floor division to find cols fully populated with availability data
         full_columns = av_rows // n_rows
-        print('full_columns')
-        print(full_columns)
         if full_columns > 0:
             n_avail_rows_in_full = full_columns*n_rows
-            print("n_avail_rows_in_full " + str(n_avail_rows_in_full))
             avail_full = available[:n_avail_rows_in_full][:]  #just take fully-populated n_cols
-            print("avail_full shape " + str(avail_full.shape))
             avail_part = available[n_avail_rows_in_full:][:] # the remainder
-            print("avail_part shape " + str(avail_part.shape))
-
         else:       # no full cols, so just the 'remainder'
             avail_full = []
             avail_part = available
@@ -118,10 +110,12 @@ class BookingFinder:
         av_part_rows, av_part_cols = avail_part.shape
         pad_rows = n_rows - av_part_rows
         pad_cols = n_cols - av_part_cols
-        print(pad_rows, pad_cols)
         avail_part_pad = np.pad(avail_part, ((0,pad_rows), (0,n_cols)))
         # append the (padded) partially filled columns to the full columns
-        plot_avail = np.append(avail_full, avail_part_pad, axis=1)
+        if avail_full == []:
+            plot_avail = avail_part_pad
+        else:
+            plot_avail = np.append(avail_full, avail_part_pad, axis=1)
         fig, ax = plt.subplots()
         ax.imshow(plot_avail, cmap='gray')
         plt.show()
@@ -132,16 +126,42 @@ class BookingFinder:
         and works out the available slots
         output: list of slots
         '''
+        #  plan: (i) slice out part of available array
+        #        (ii) multiply by required array to give avail_x_reqd
+        #        (iii)  if all required slots are available, then the sum of all elements
+        #               in avail_x_reqd will be the same as the sum of all elements in
+        #               required array.  Sum will be less if any slots are 'missing'
 
-        return
+        reqd_slots, reqd_resources = required.shape
+        avail_slots, avail_resources = available.shape
+        sum_required = np.sum(required)  # total slots required for a booking, across all resources
+        slot = 0
+        avail_x_reqd = []
+        is_match = []
+        while slot <= (avail_slots - reqd_slots):
+            avail_part = available[slot:(slot+reqd_slots)][:]
+            avail_x_reqd.append(np.sum(np.multiply(avail_part, required)))
+            if avail_x_reqd[slot] == sum_required:
+                is_match.append(1)
+            else:
+                is_match.append(0)
+            slot = slot + 1
+
+        print("Found ", np.sum(np.array(is_match)), " slots")
+        fig, ax = plt.subplots()
+        ax.bar(range(len(is_match)), is_match)
+        plt.show()
+        return is_match
 
 ###   main() #################################################################
+slots_wk = 2 * 9 * 5  # slots/hr * hours/day * days/wk
+n_weeks = 26
+
 test_finder = BookingFinder()
 template = test_finder.load_availability('template_availability.csv')
 resource = test_finder.get_availability(True)
 #need some error trapping here
-slots_wk = 2 * 9 * 5  # slots/hr * hours/day * days/wk
-n_weeks = 26
-resources = ['3TE', '3TW', '7T', '3TM']
 test_finder.plot_availabilty(resource, slots_wk, n_weeks )
-test_finder.find_slot(template, resource)
+# this returns a list of 1/0 values indicating whether the availability
+# of resources at the slot match the requirement
+found_slot = test_finder.find_slot(template, resource)
