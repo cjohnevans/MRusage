@@ -110,7 +110,8 @@ class BookingFinder:
         av_part_rows, av_part_cols = avail_part.shape
         pad_rows = n_rows - av_part_rows
         pad_cols = n_cols - av_part_cols
-        avail_part_pad = np.pad(avail_part, ((0,pad_rows), (0,n_cols)))
+        print('avail_part_r', av_part_rows, 'avail part col', av_part_cols, 'pad rows ', pad_rows, 'pad cols ', pad_cols)
+        avail_part_pad = np.pad(avail_part, ((0,pad_rows), (0,n_cols)), mode='constant' )
         # append the (padded) partially filled columns to the full columns
         if avail_full == []:
             plot_avail = avail_part_pad
