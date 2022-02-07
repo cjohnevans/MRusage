@@ -22,9 +22,11 @@ class BookingFinder:
 
             csvlines = csv.reader(csvfile, delimiter=',')
             for row in csvlines:
-                availability_line = [ int(resource.strip()) for resource in row ]
-                availability.append(availability_line)
+                if row:    #trap empty lines
+                    availability_line = [ int(resource.strip()) for resource in row ]
+                    availability.append(availability_line)
         availability_np = np.array(availability)
+        #print(availability_np)
         return availability_np
 
     # def load_availability_dict(self, filename):
@@ -86,15 +88,16 @@ class BookingFinder:
 
         return resource_availability
 
-    def plot_availabilty(self, available, n_rows, n_weeks):
+    def plot_schedule(self, available, n_rows, n_weeks):
         '''
         input:   available (the availability matrix from all resources)
                  n_rows - the number of rows in plot (typically the slots_per_week)
                  n_weeks - no of weeks to plot. total columns will be
                    n_weeks * n_resources
         output:  plot of availabilty, formatted to columns of slots making up
-                 one week, one column per resource.
+                 one week, one column per resource
         '''
+        print(available.shape)
         av_rows, av_cols = available.shape
         n_cols = av_cols*n_weeks  # n_cols = total n columns in plot
         # floor division to find cols fully populated with availability data
@@ -121,48 +124,83 @@ class BookingFinder:
         ax.imshow(plot_avail, cmap='gray')
         plt.show()
 
+    def plot_matches(self, available, required, match, n_rows, n_weeks):
+        '''
+        input: available (the availability matrix from all resources)
+               required (the template matrix of required resources)
+               match (list of whether template matches available, for each slot)
+               n_rows - the number of rows in plot (typically the slots_per_week)
+               n_weeks - no of weeks to plot. total columns will be
+                  n_weeks * n_resources
+        output:  plot of availabilty, formatted to columns of slots making up
+                 one week, one column per resource 
+        '''
+        reqd_slots, reqd_resources = required.shape  # (slot, resource)
+        avail_slots, avail_resources = available.shape # (slot, resource)
+        blank = np.zeros(available.shape )
+        match_img = blank
+        print("blank shape ", blank.shape)
+        slot=0
+
+        while slot <= (avail_slots - reqd_slots):
+            if match[slot] == 1:
+                match_img[slot:(slot+reqd_slots)][:] = required
+            slot += 1
+
+        match_avail_img = match_img + available # add match to available to highlight matches
+       
+        self.plot_schedule(match_avail_img, n_rows, n_weeks)
+        
     def find_slot(self, required, available):
         '''
         input: two numpy arrays - required (template requirement) and available (from bookings)
         and works out the available slots
         output: list of slots
-        '''
         #  plan: (i) slice out part of available array
         #        (ii) multiply by required array to give avail_x_reqd
         #        (iii)  if all required slots are available, then the sum of all elements
         #               in avail_x_reqd will be the same as the sum of all elements in
         #               required array.  Sum will be less if any slots are 'missing'
 
+        # general syntax is;
+        #  availablity (or av, avail) = when resource is free
+        #  template = the required availability template
+        #  match = when template matches availability
+        '''
+
         reqd_slots, reqd_resources = required.shape
         avail_slots, avail_resources = available.shape
         sum_required = np.sum(required)  # total slots required for a booking, across all resources
         slot = 0
-        avail_x_reqd = []
-        is_match = []
+        sum_avail_x_reqd = []
+        match = []
         while slot <= (avail_slots - reqd_slots):
             avail_part = available[slot:(slot+reqd_slots)][:]
-            avail_x_reqd.append(np.sum(np.multiply(avail_part, required)))
-            if avail_x_reqd[slot] == sum_required:
-                is_match.append(1)
+            avail_x_reqd = np.multiply(avail_part, required)
+            sum_avail_x_reqd.append(np.sum(avail_x_reqd))
+            if sum_avail_x_reqd[slot] == sum_required:
+                match.append(1)
             else:
-                is_match.append(0)
+                match.append(0)
             slot = slot + 1
 
-        print("Found ", np.sum(np.array(is_match)), " slots")
+        print("Found ", np.sum(np.array(match)), " slots")
         fig, ax = plt.subplots()
-        ax.bar(range(len(is_match)), is_match)
+        ax.bar(range(len(match)), match)
         plt.show()
-        return is_match
+        return match
 
 ###   main() #################################################################
 slots_wk = 2 * 9 * 5  # slots/hr * hours/day * days/wk
 n_weeks = 26
 
 test_finder = BookingFinder()
-template = test_finder.load_availability('template_availability.csv')
+required = test_finder.load_availability('template_availability.csv')
 resource = test_finder.get_availability(True)
+print(resource.shape)
 #need some error trapping here
-test_finder.plot_availabilty(resource, slots_wk, n_weeks )
+#test_finder.plot_schedule(resource, slots_wk, n_weeks )
 # this returns a list of 1/0 values indicating whether the availability
 # of resources at the slot match the requirement
-found_slot = test_finder.find_slot(template, resource)
+found_slot = test_finder.find_slot(required, resource)
+test_finder.plot_matches(resource, required, found_slot, slots_wk, n_weeks )
