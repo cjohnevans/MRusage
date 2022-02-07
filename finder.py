@@ -2,17 +2,17 @@ import csv
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
+import random as rnd
 
 ###   BookingFinder #################################################################
 class BookingFinder:
-    def load_availability(self, filename):
+    def load_schedule(self, filename):
         '''
-        input:  filename of cvs in the format given by finder_template.csv
-                assumes a format of 3TE,3TE,3TM,7T,operator with an (ignored) header
-        output: numpy array with booking template
+        input:  filename of cvs with 3TE,3TE,3TM,7T,operator with an (ignored) header
+        output: numpy array with schedule (which could be an availability or a requirement)
         '''
 
-        availability = [] #as list
+        schedule = [] #as list
 
         with open(filename, 'r') as csvfile:
             header = csvfile.readline().split(',')
@@ -23,64 +23,44 @@ class BookingFinder:
             csvlines = csv.reader(csvfile, delimiter=',')
             for row in csvlines:
                 if row:    #trap empty lines
-                    availability_line = [ int(resource.strip()) for resource in row ]
-                    availability.append(availability_line)
-        availability_np = np.array(availability)
+                    schedule_line = [ int(resource.strip()) for resource in row ]
+                    schedule.append(schedule_line)
+        schedule_np = np.array(schedule)
         #print(availability_np)
-        return availability_np
+        return schedule_np
 
-    # def load_availability_dict(self, filename):
-    #     '''
-    #     input:  filename of cvs in the format given by booking_template.csv
-    #             loads template as dict
-    #     output: numpy array with booking template
-    #     NOT WORKING
-    #     '''
-    #     template_dict = []  # dictionary version, from csv file
-    #     template = [] #list/numpy array? for use in the optimiser/locator
-    #
-    #     print('filename: ' + filename)
-    #     with open(filename, 'r') as csvfile:
-    #         # need the next few lines to deal with whitespaces in key.  Explicitly send this to DictReader
-    #         header = csvfile.readline().split(',')
-    #         header = [header[idx].strip() for idx in range(0,len(header)) ]
-    #         for res in header:
-    #             print(res)
-    #         csvread = csv.DictReader(csvfile, fieldnames=header)
-    #         for row in csvread:
-    #             tmp=list(row.values())
-    #             # still not there with the typing:  this gets it into a LIST of INTs
-    #             print(tmp[1])
-    #             print(int(tmp[1]))
-    #             template_dict.append(row) #as a dictionary
-    #
-    #     # express as lists
-    #     nslots = len(template_dict)
-    #     template_resources = header
-    #     for slot in range(0,nslots):
-    #         #print(slot)
-    #         #print(template)
-    #         template.append(list(template_dict[slot].values()))
-    #
-    #     #print(template_resources)
-    #     #print(template)
-    #
-    #     # this is a numpy array of STRINGS - need to convert to ints for the booking locator.
-    #     test = np.array(template)
-    #     #print(test)
-    #     #print(type(test[0][0]))
+    def random_schedule(self, n_slots):
+        '''
+        generate a random schedule of 5 resources x n_slots
+        '''
+        n_resources = 5
+        occupancy = [0.5, 0.5, 0.5, 0.5, 0.5]  # proby of being occupied
+        available = np.zeros((n_slots, n_resources))
+        
+        for resource in range(n_resources):
+            for slot in range(n_slots):
+                if rnd.random() > occupancy[resource]:
+                    available[slot][resource] = 0  #not available if occupied
+                else:
+                    available[slot][resource] = 1  #available if not occupied
+        print(np.shape(available))
+        print(np.sum(available))
+        return available
 
-    def get_availability(self, is_debug):
+    def get_schedule(self, method):
         '''
         input: a BookingFilter object.  Specifically needs booking_datetime (start time),
           booking duration_hours (numpy array)
-               is_debug boolean.  if true load from file rather than calculate.
+               method = 'finder', 'csv' or 'random' (string)
         output: numpy array of availabilities
         '''
-        if is_debug:
+        if method == 'csv':
             print('debug')
-            resource_availability = self.load_availability('debug_availability.csv')
-        else:
+            resource_availability = self.load_schedule('debug_availability.csv')
+        elif method == 'random':
+            nslots = 200
+            resource_availability = self.random_schedule(nslots)
+        else:  #assume 'finder'
             # get resource_availability from BookingFinder calculation
             pass
         #  need to add unavailable hours at the end of each day to prevent
@@ -195,12 +175,17 @@ slots_wk = 2 * 9 * 5  # slots/hr * hours/day * days/wk
 n_weeks = 26
 
 test_finder = BookingFinder()
-required = test_finder.load_availability('template_availability.csv')
-resource = test_finder.get_availability(True)
-print(resource.shape)
+#load the required schedule
+required = test_finder.load_schedule('required_schedule.csv')
+
+# works for csv, not for random
+#resource = test_finder.get_schedule('random')
+resource = test_finder.get_schedule('csv')
+
 #need some error trapping here
 #test_finder.plot_schedule(resource, slots_wk, n_weeks )
 # this returns a list of 1/0 values indicating whether the availability
 # of resources at the slot match the requirement
 found_slot = test_finder.find_slot(required, resource)
 test_finder.plot_matches(resource, required, found_slot, slots_wk, n_weeks )
+#test_finder.random_schedule(100)
