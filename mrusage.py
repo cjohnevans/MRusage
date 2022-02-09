@@ -231,6 +231,6 @@ scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hou
 bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
 
 test_finder_2 = finder.BookingFinder()
-print(test_finder_2.empty_fn())
+
 
 
