@@ -194,14 +194,17 @@ def bookings_stacked_bar(x_data, y_data, title):
         start_height = [start_height[jj] + y_data[series][jj] for jj in range(len(start_height))]
     plt.legend(x_data.keys())
     plt.title(title)
+#    plt.show(block=False)
     plt.show()
+
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
 
 #resource_list = ['3TE', '3TW', '7T', '3TM', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
 scanner_list = ['3TE', '3TW', '7T', '3TM']
-operator_list = [ 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans' ]
+#operator_list = [ 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans' ]
+operator_list = [ 'Peter Hobden', 'Allison Cooper']
 booking_status = ['APPROVED','CANCELLED']
 resource_list = scanner_list
 
@@ -230,7 +233,26 @@ scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num 
 scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
 bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
 
+operator_booking = {}
+operator_analysis = {}
+for resource in operator_list:
+    # calls get_bookings function from the resource-specific instance of the BookingFilter class
+    # booking_list_approved.
+    operator_booking[resource] = BookingFilter(resource, 'APPROVED')
+    operator_booking[resource].get_bookings(dec_bookings.booking_dict)
+    operator_analysis[resource] = BookingAnalyse(operator_booking[resource])
+    operator_analysis[resource].calc_bookings_weeknum(operator_booking[resource])
+#    booking_analysis_approved[resource].plot_hours()
+
+operator_stacked_axes = { resource: operator_analysis[resource].week_num for resource in operator_list }
+print(len(operator_analysis['Peter Hobden'].week_num))
+print((operator_analysis['Peter Hobden'].week_num))
+print(operator_analysis['Peter Hobden'].week_hours)
+
+operator_stacked_hours = { resource: operator_analysis[resource].week_hours for resource in operator_list }
+print('operator_stacked_ axes and hours')
+print(operator_stacked_axes)
+print(operator_stacked_hours)
+bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours,'Hours booked per week, by operator')
+
 test_finder_2 = finder.BookingFinder()
-
-
-
