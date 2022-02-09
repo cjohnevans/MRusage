@@ -127,7 +127,6 @@ class BookingFilter:
                                           int(time_split[0]), int(time_split[1]), int(time_split[2]) )    
             self.booking_datetime.append(datetime_tmp)
             week_num.append(datetime_tmp.isocalendar()[1]) #list
-            #print(week_num)
         self.booking_week_num = np.array(week_num) # np array
 
     # total the hours per project.  Can be all resources, or resource-specific, depending on the filter
@@ -140,7 +139,8 @@ class BookingFilter:
 #### class BookingAnalyse #####################################################
 # object to analyse the data recovered from BookingFilter.
 class BookingAnalyse:
-    def __init__(self, booking_filter_list):
+    def __init__(self, res, booking_filter_list):
+        self.resource = res
         self.week_num = []
         self.week_hours = []
     
@@ -158,21 +158,34 @@ class BookingAnalyse:
             week_hours.append(np.sum(booking_week_hours))
         self.week_num = week_num
         self.week_hours = week_hours
-        return (week_num, week_hours)
+        self.calc_stats()
+
+    def calc_stats(self):
+        self.week_hour_avg = np.mean(self.week_hours)
+        self.week_hour_stdev = np.std(self.week_hours)
+        self.week_hour_max = np.amax(self.week_hours)
+        self.week_hour_min = np.amin(self.week_hours)
+        print('----------------------')
+        print(self.resource)
+        print('Average Hrs/wk', self.week_hour_avg)
+        print('StdDev  Hrs/wk', self.week_hour_stdev)
+        print('Maximum Hrs/wk', self.week_hour_max)
+        print('Minimum Hrs/wk', self.week_hour_min)
+
 
     def plot_hours(self):
         hours_max = 60 # default to 60hours max
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(1,1,1)
         ax1.set_ylim(0, hours_max)
-        ax1.plot(self.week_num, self.week_hours)
+        ax1.bar(self.week_num, self.week_hours)
         plt.title(resource)
-        plt.show()
-
+        plt.savefig('output/' + resource )
+                    
         
 #### main() ##############################################################################
 #  this spans multiple resources, across multiple classes, so doesn't fit in BookingAnalyse...
-def bookings_stacked_bar(x_data, y_data, title):
+def bookings_stacked_bar(x_data, y_data, figfname, title):
     '''
     stacked bar plot of x_data vs y_data.  both x_data and y_data are dicts with resource titles as keys.
     '''
@@ -195,8 +208,7 @@ def bookings_stacked_bar(x_data, y_data, title):
     plt.legend(x_data.keys())
     plt.title(title)
 #    plt.show(block=False)
-    plt.show()
-
+    plt.savefig('output/' + figfname)
 
 dec_bookings = BookingSource(fname)
 dec_bookings.read_csv()
@@ -220,18 +232,17 @@ for resource in resource_list:
     # booking_list_approved.
     booking_list_approved[resource] = BookingFilter(resource, 'APPROVED')
     booking_list_approved[resource].get_bookings(dec_bookings.booking_dict)
-    booking_analysis_approved[resource] = BookingAnalyse(booking_list_approved[resource])
+    booking_analysis_approved[resource] = BookingAnalyse(resource, booking_list_approved[resource])
     booking_analysis_approved[resource].calc_bookings_weeknum(booking_list_approved[resource])
     booking_list_cancelled[resource] = BookingFilter(resource, 'CANCELLED')
     booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
-#    booking_analysis_approved[resource].plot_hours()
-
-print(booking_analysis_approved['3TW'].week_num)
+    booking_analysis_approved[resource].plot_hours()
 
 # dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
 scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
 scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
-bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
+bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,\
+                     'ScannerHours.png','Hours booked per week, by scanner')
 
 operator_booking = {}
 operator_analysis = {}
@@ -240,19 +251,16 @@ for resource in operator_list:
     # booking_list_approved.
     operator_booking[resource] = BookingFilter(resource, 'APPROVED')
     operator_booking[resource].get_bookings(dec_bookings.booking_dict)
-    operator_analysis[resource] = BookingAnalyse(operator_booking[resource])
+    operator_analysis[resource] = BookingAnalyse(resource, operator_booking[resource])
     operator_analysis[resource].calc_bookings_weeknum(operator_booking[resource])
-#    booking_analysis_approved[resource].plot_hours()
+    operator_analysis[resource].plot_hours()
 
 operator_stacked_axes = { resource: operator_analysis[resource].week_num for resource in operator_list }
-print(len(operator_analysis['Peter Hobden'].week_num))
-print((operator_analysis['Peter Hobden'].week_num))
-print(operator_analysis['Peter Hobden'].week_hours)
 
 operator_stacked_hours = { resource: operator_analysis[resource].week_hours for resource in operator_list }
-print('operator_stacked_ axes and hours')
-print(operator_stacked_axes)
-print(operator_stacked_hours)
-bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours,'Hours booked per week, by operator')
+bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours, \
+                     'OperatorHours.png', 'Hours booked per week, by operator')
 
 test_finder_2 = finder.BookingFinder()
+
+

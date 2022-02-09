@@ -34,17 +34,17 @@ class BookingFinder:
         generate a random schedule of 5 resources x n_slots
         '''
         n_resources = 5
-        occupancy = [0.5, 0.5, 0.5, 0.5, 0.5]  # proby of being occupied
+        p_availability = [1, .5, .5, .5 ,1]  # proby of being available
+
         available = np.zeros((n_slots, n_resources))
         
         for resource in range(n_resources):
             for slot in range(n_slots):
-                if rnd.random() > occupancy[resource]:
-                    available[slot][resource] = 0  #not available if occupied
+                aa=rnd.random()
+                if aa < p_availability[resource]: 
+                    available[slot][resource] = 1  
                 else:
-                    available[slot][resource] = 1  #available if not occupied
-        print(np.shape(available))
-        print(np.sum(available))
+                    available[slot][resource] = 0  
         return available
 
     def get_schedule(self, method):
@@ -58,7 +58,7 @@ class BookingFinder:
             print('debug')
             resource_availability = self.load_schedule('debug_availability.csv')
         elif method == 'random':
-            nslots = 200
+            nslots = 180
             resource_availability = self.random_schedule(nslots)
         else:  #assume 'finder'
             # get resource_availability from BookingFinder calculation
@@ -68,7 +68,7 @@ class BookingFinder:
 
         return resource_availability
 
-    def plot_schedule(self, available, n_rows, n_weeks):
+    def plot_schedule(self, fname, available, n_rows, n_weeks):
         '''
         input:   available (the availability matrix from all resources)
                  n_rows - the number of rows in plot (typically the slots_per_week)
@@ -77,18 +77,22 @@ class BookingFinder:
         output:  plot of availabilty, formatted to columns of slots making up
                  one week, one column per resource
         '''
-        print(available.shape)
         av_rows, av_cols = available.shape
-        n_cols = av_cols*n_weeks  # n_cols = total n columns in plot
+        avail_space = np.pad(available, ((0,0), (0,1)), mode='constant') #pad one col of zeroes, for clarity
+        n_cols = (av_cols+1)*n_weeks  # n_cols = total n columns in plot
         # floor division to find cols fully populated with availability data
         full_columns = av_rows // n_rows
+        print('full_columns', full_columns)
         if full_columns > 0:
             n_avail_rows_in_full = full_columns*n_rows
-            avail_full = available[:n_avail_rows_in_full][:]  #just take fully-populated n_cols
-            avail_part = available[n_avail_rows_in_full:][:] # the remainder
+            #just take fully-populated n_cols
+            avail_full = np.reshape(avail_space[:n_avail_rows_in_full][:], \
+                                    (90, full_columns*(av_cols+1)) )
+            print('aval_full', avail_full.shape)
+            avail_part = avail_space[n_avail_rows_in_full:][:] # the remainder
         else:       # no full cols, so just the 'remainder'
             avail_full = []
-            avail_part = available
+            avail_part = avail_space
 
         av_part_rows, av_part_cols = avail_part.shape
         pad_rows = n_rows - av_part_rows
@@ -96,13 +100,14 @@ class BookingFinder:
         print('avail_part_r', av_part_rows, 'avail part col', av_part_cols, 'pad rows ', pad_rows, 'pad cols ', pad_cols)
         avail_part_pad = np.pad(avail_part, ((0,pad_rows), (0,n_cols)), mode='constant' )
         # append the (padded) partially filled columns to the full columns
-        if avail_full == []:
+#        print('aval_full', avail_full.shape, 'avail_part_pad',avail_part_pad.shape)
+        if len(avail_full) == 0:
             plot_avail = avail_part_pad
         else:
             plot_avail = np.append(avail_full, avail_part_pad, axis=1)
         fig, ax = plt.subplots()
         ax.imshow(plot_avail, cmap='gray')
-        plt.show()
+        plt.savefig('output/' + fname, dpi=720)
 
     def plot_matches(self, available, required, match, n_rows, n_weeks):
         '''
@@ -128,8 +133,10 @@ class BookingFinder:
             slot += 1
 
         match_avail_img = match_img + available # add match to available to highlight matches
-       
-        self.plot_schedule(match_avail_img, n_rows, n_weeks)
+
+        print(np.amax(match_avail_img), np.amin(match_avail_img)  )
+        self.plot_schedule('availability_img.tiff', available, n_rows, n_weeks)
+        self.plot_schedule('match_img.tiff', match_avail_img, n_rows, n_weeks)
         
     def find_slot(self, required, available):
         '''
@@ -167,7 +174,7 @@ class BookingFinder:
         print("Found ", np.sum(np.array(match)), " slots")
         fig, ax = plt.subplots()
         ax.bar(range(len(match)), match)
-        plt.show()
+        plt.savefig('output/match_plot.png')
         return match
 
 ###   main() #################################################################
@@ -179,8 +186,8 @@ test_finder = BookingFinder()
 required = test_finder.load_schedule('required_schedule.csv')
 
 # works for csv, not for random
-#resource = test_finder.get_schedule('random')
-resource = test_finder.get_schedule('csv')
+resource = test_finder.get_schedule('random')
+#resource = test_finder.get_schedule('csv')
 
 #need some error trapping here
 #test_finder.plot_schedule(resource, slots_wk, n_weeks )
