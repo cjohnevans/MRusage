@@ -41,8 +41,7 @@ def bookings_stacked_bar(x_data, y_data, figfname, title):
 #    plt.show(block=False)
     plt.savefig('output/' + figfname)
 
-dec_bookings = cal.BookingSource(fname)
-dec_bookings.read_csv()
+cal_bookings = cal.BookingSource(fname)
 
 #resource_list = ['3TE', '3TW', '7T', '3TM', 'Peter Hobden', 'Allison Cooper', 'Sonya Foley', 'John Evans'  ]
 scanner_list = ['3TE', '3TW', '7T', '3TM']
@@ -61,12 +60,10 @@ booking_analysis_cancelled = {}   # a list of BookingAnalysis objects
 for resource in resource_list:
     # calls get_bookings function from the resource-specific instance of the BookingFilter class
     # booking_list_approved.
-    booking_list_approved[resource] = cal.BookingFilter(resource, 'APPROVED')
-    booking_list_approved[resource].get_bookings(dec_bookings.booking_dict)
-    booking_analysis_approved[resource] = cal.BookingAnalyse(resource, booking_list_approved[resource])
+    booking_list_approved[resource] = cal.BookingFilter(cal_bookings.booking, resource, 'APPROVED')
+    booking_analysis_approved[resource] = cal.BookingAnalyse(resource)
     booking_analysis_approved[resource].calc_bookings_weeknum(booking_list_approved[resource])
-    booking_list_cancelled[resource] = cal.BookingFilter(resource, 'CANCELLED')
-    booking_list_cancelled[resource].get_bookings(dec_bookings.booking_dict)
+    booking_list_cancelled[resource] = cal.BookingFilter(cal_bookings.booking, resource, 'CANCELLED')
     booking_analysis_approved[resource].plot_hours()
 
 # dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
@@ -80,9 +77,8 @@ operator_analysis = {}
 for resource in operator_list:
     # calls get_bookings function from the resource-specific instance of the BookingFilter class
     # booking_list_approved.
-    operator_booking[resource] = cal.BookingFilter(resource, 'APPROVED')
-    operator_booking[resource].get_bookings(dec_bookings.booking_dict)
-    operator_analysis[resource] = cal.BookingAnalyse(resource, operator_booking[resource])
+    operator_booking[resource] = cal.BookingFilter(cal_bookings.booking, resource, 'APPROVED')
+    operator_analysis[resource] = cal.BookingAnalyse(resource)
     operator_analysis[resource].calc_bookings_weeknum(operator_booking[resource])
     operator_analysis[resource].plot_hours()
 

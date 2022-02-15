@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 class BookingSource:
     def __init__ (self, filename) :
         # lists, with values from each booking
-        self.booking_dict = []
+        self.booking = []
         self.filename = filename
+        self.read_csv()
 
     # read csv data 
     def read_csv(self):
@@ -17,13 +18,13 @@ class BookingSource:
         with open(self.filename, 'r') as csvfile:
             csvread = csv.DictReader(csvfile)
             for row in csvread:
-                self.booking_dict.append(row)
+                self.booking.append(row)
 
 #### class BookingFilter ############################################################################
 # object containing all bookings for a given filter
 # for example, all APPROVED bookings on 3TW
 class BookingFilter:
-    def __init__ (self, resource_name_filter, booking_status_filter):
+    def __init__ (self, source_bookings, resource_name_filter, booking_status_filter):
         # variables are lists with [variable_booking1, variable_booking2, ...]
         self.resource_name_filter = resource_name_filter
         self.booking_status_filter = booking_status_filter
@@ -48,11 +49,13 @@ class BookingFilter:
         self.booking_datetime = []  # list of datetime objects
         self.booking_week_num = []
         self.project_list = [] #set with unique project names
+        self.get_bookings(source_bookings)
+        self.calc_booking_date()
  
     # popluate the variable in BookingFilter class, from bookings matching the filter.
-    def get_bookings(self, booking_dict):
+    def get_bookings(self, source_bookings):
         '''
-        input:   dict from BookingSource
+        input:   source_bookings from BookingSource
         
         output:  populate the booking info in the BookingFilter object, subject to matching
                    the appropriate filters (resource, status)
@@ -60,7 +63,7 @@ class BookingFilter:
         todo:    add time filter to set a date range of bookings to return
         '''
         tmp_duration_hours = [] #list
-        for row in booking_dict:
+        for row in source_bookings:
             # include booking if resource matches the filter of if resource set to 'all'
             if (self.resource_name_filter == 'all') or (row['resource'] == self.resource_name_filter):
                 # include booking if status matches filter or if booking is set to 'all'
@@ -86,7 +89,6 @@ class BookingFilter:
                     self.cancellation_reason.append(row['project'])
                     self.cancellation_comments.append(row['project'])
         self.duration_hours = np.array(tmp_duration_hours)
-        self.calc_booking_date()
         self.project_list = set(self.project)
 
     # May need to repeat this for start and end dates.  Could make this a fn which has the list start_date (or end_date)
@@ -129,7 +131,7 @@ class BookingFilter:
 #### class BookingAnalyse #####################################################
 # object to analyse the data recovered from BookingFilter.
 class BookingAnalyse:
-    def __init__(self, res, booking_filter_list):
+    def __init__(self, res):
         self.resource = res
         self.week_num = []
         self.week_hours = []
@@ -149,6 +151,14 @@ class BookingAnalyse:
         self.week_num = week_num
         self.week_hours = week_hours
         self.calc_stats()
+
+    def calc_availability(self, flt):
+        '''
+        based on the filter_list, calculate the availability in blocks
+        '''
+        time_block_length = 30 # mins
+        print(flt.booking_datetime)
+        print(flt.duration_minutes)
 
     def calc_stats(self):
         self.week_hour_avg = np.mean(self.week_hours)
@@ -170,4 +180,3 @@ class BookingAnalyse:
         ax1.bar(self.week_num, self.week_hours)
         plt.title(self.resource)
         plt.savefig('output/' + self.resource )
-                    
