@@ -49,6 +49,7 @@ class BookingFilter:
         self.booking_datetime = []  # list of datetime objects
         self.booking_week_num = []
         self.project_list = [] #set with unique project names
+        #setup functions
         self.get_bookings(source_bookings)
         self.calc_booking_date()
  
@@ -157,8 +158,38 @@ class BookingAnalyse:
         based on the filter_list, calculate the availability in blocks
         '''
         time_block_length = 30 # mins
+        ignore_weekends = True
+        start_hour_limit = 9   # ignore hours before this
+        end_hour_limit = 18  # ignore hours after this
         print(flt.booking_datetime)
         print(flt.duration_minutes)
+
+        slot_available = np.array([]) # n_slots x n_resources array of availability (0,1)
+        full_slot = []   # list of full slots
+
+        # populate the full_slot array
+        # need to work this out in integer slots
+        if(ignore_weekends):
+            max_day = 5
+        else:
+            max_day = 7
+        print('max_day',max_day)
+
+        new_min = 0
+        for bk in flt.booking_datetime:
+            # logic to populate full_slot array goes here
+            # step 1 - greedy slot.  make sure full 30min slot is marked 'full'
+            if bk.minute < 30:  #before half past
+                new_min = 0
+            else:    # after half past
+                new_min = 30
+            print(bk.weekday(), bk.hour, bk.minute, '       ', bk.hour, new_min)   
+
+# not sure I'll need this, but keep the logic for now
+#            if bk.weekday() < max_day: # ignore weekends
+#                if bk.hour >= start_hour_limit and bk.hour <= end_hour_limit:   # ignore out of hours
+
+
 
     def calc_stats(self):
         self.week_hour_avg = np.mean(self.week_hours)
