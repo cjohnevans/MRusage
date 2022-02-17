@@ -88,5 +88,10 @@ operator_stacked_hours = { resource: operator_analysis[resource].week_hours for 
 bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours, \
                      'OperatorHours.png', 'Hours booked per week, by operator')
 
-
-
+bk_7t = cal.BookingFilter(cal_bookings.booking, '7T', 'APPROVED')
+#an_7t = cal.BookingAnalyse('7T')
+print(len(bk_7t.start_date))
+proj_7t = set(bk_7t.project)
+print(len(proj_7t))
+print(proj_7t)
+    

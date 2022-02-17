@@ -49,6 +49,7 @@ class BookingFilter:
         self.booking_datetime = []  # list of datetime objects
         self.booking_week_num = []
         self.project_list = [] #set with unique project names
+        self.start_duration = [] #list of tuples with (starttime, duration)
         #setup functions
         self.get_bookings(source_bookings)
         self.calc_booking_date()
@@ -122,6 +123,16 @@ class BookingFilter:
             week_num.append(datetime_tmp.isocalendar()[1]) #list
         self.booking_week_num = np.array(week_num) # np array
 
+
+        ######### this logic isn't right.  
+        intduration = [ int(dur) for dur in self.duration_minutes ]  #ok
+        #### next line needs to iterate across all items
+        self.start_duration.append( tuple(zip(self.booking_datetime, intduration )))
+
+
+
+        print('self_duration', len(self.start_duration))
+
     # total the hours per project.  Can be all resources, or resource-specific, depending on the filter
     # applied to the BookingFilter class
     def calc_bookings_project(self):
@@ -176,7 +187,8 @@ class BookingAnalyse:
         print('max_day',max_day)
 
         new_min = 0
-        for bk in flt.booking_datetime:
+        for (bk, dur) in flt.start_duration:
+            print(bk, dur)
             # logic to populate full_slot array goes here
             # step 1 - greedy slot.  make sure full 30min slot is marked 'full'
             if bk.minute < 30:  #before half past
@@ -184,6 +196,8 @@ class BookingAnalyse:
             else:    # after half past
                 new_min = 30
             print(bk.weekday(), bk.hour, bk.minute, '       ', bk.hour, new_min)   
+            bk_start = datetime.datetime(bk.year, bk.month, bk.day, bk.hour, new_min)
+            print(bk_start)
 
 # not sure I'll need this, but keep the logic for now
 #            if bk.weekday() < max_day: # ignore weekends
