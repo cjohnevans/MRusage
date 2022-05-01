@@ -10,8 +10,14 @@ import calpendobookings as cal
 import os
 
 home_dir = os.environ['HOME']
-data_dir = os.path.join(home_dir, 'data_sapje1/mr_usage')
+host_name = os.uname()[1]
+if 'lenovo' in host_name:
+    data_dir = os.path.join(home_dir, 'data/mr_usage')
+else:
+    data_dir = os.path.join(home_dir, 'data_sapje1/mr_usage')
+print(host_name)
 print(data_dir)
+
 
 # this is the utf-8 encoded version:
 fname = 'mri_activity_2021aprdec_all_b.csv'  # 2021 data
