@@ -1,5 +1,6 @@
-
-# next - plotting of summary data...
+# mrusage - plot data from calpendo bookings.
+#  cje
+#  next - plotting of summary data...
 
 import csv
 import matplotlib.pyplot as plt
@@ -15,12 +16,14 @@ if 'lenovo' in host_name:
     data_dir = os.path.join(home_dir, 'data/mr_usage')
 else:
     data_dir = os.path.join(home_dir, 'data_sapje1/mr_usage')
+output_dir = os.path.join(data_dir, 'output')
 print(host_name)
 print(data_dir)
+print(output_dir)
 
 
 # this is the utf-8 encoded version:
-fname = 'mri_activity_2021aprdec_all_b.csv'  # 2021 data
+#fname = 'mri_activity_2021aprdec_all_b.csv'  # 2021 data
 fname = 'mri_activity_2022.csv'  #2022 data
 
 file_path = os.path.join(data_dir, fname)
@@ -44,6 +47,7 @@ def bookings_stacked_bar(x_data, y_data, figfname, title):
     fig, ax = plt.subplots()
     ax.set_ylim(0, hours_max)
     for series in x_data.keys():
+        print('series ', str(series))
         print(len(x_data[series]))  # BUG need to deal with series of different lengths.
         ax.bar(x_data[series] , y_data[series], bottom = start_height)
         # work out starting point for next bar series, by list comprehension.
@@ -78,39 +82,12 @@ for resource in resource_list:
     booking_analysis_approved[resource] = cal.BookingAnalyse(resource)
     booking_analysis_approved[resource].calc_bookings_weeknum(booking_list_approved[resource])
     booking_list_cancelled[resource] = cal.BookingFilter(cal_bookings.booking, resource, 'CANCELLED')
-    booking_analysis_approved[resource].plot_hours()
+    booking_analysis_approved[resource].plot_hours(output_dir)
 
 # dict comprehension - assign values to a local variables for plotting.  Can pass this as a single dict to plotting fn.
 scanner_stacked_axes = { resource: booking_analysis_approved[resource].week_num for resource in resource_list }
 scanner_stacked_hours = { resource: booking_analysis_approved[resource].week_hours for resource in resource_list }
-<<<<<<< HEAD
-bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,'Hours booked per week, by scanner')
 
-operator_booking = {}
-operator_analysis = {}
-for resource in operator_list:
-    # calls get_bookings function from the resource-specific instance of the BookingFilter class
-    # booking_list_approved.
-    operator_booking[resource] = BookingFilter(resource, 'APPROVED')
-    operator_booking[resource].get_bookings(dec_bookings.booking_dict)
-    operator_analysis[resource] = BookingAnalyse(operator_booking[resource])
-    operator_analysis[resource].calc_bookings_weeknum(operator_booking[resource])
-#    booking_analysis_approved[resource].plot_hours()
-
-operator_stacked_axes = { resource: operator_analysis[resource].week_num for resource in operator_list }
-print(len(operator_analysis['Peter Hobden'].week_num))
-print((operator_analysis['Peter Hobden'].week_num))
-print(operator_analysis['Peter Hobden'].week_hours)
-
-operator_stacked_hours = { resource: operator_analysis[resource].week_hours for resource in operator_list }
-print('operator_stacked_ axes and hours')
-print(operator_stacked_axes)
-print(operator_stacked_hours)
-bookings_stacked_bar(operator_stacked_axes, operator_stacked_hours,'Hours booked per week, by operatortest_finder_2 = finder.BookingFinder()
-print(test_finder_2.empty_fn())
-
-
-=======
 bookings_stacked_bar(scanner_stacked_axes, scanner_stacked_hours,\
                      'ScannerHours.png','Hours booked per week, by scanner')
 
@@ -137,4 +114,3 @@ proj_7t = set(bk_7t.project)
 print(len(proj_7t))
 print(proj_7t)
     
->>>>>>> 808c3423d818e4e2be4189d26e0aeaa3a05e1ea4

@@ -2,6 +2,7 @@ import csv
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 #### class BookingSource ############################################################################
 # class for a single input csv file (could be several, each with different timespan)
@@ -217,11 +218,12 @@ class BookingAnalyse:
         print('Maximum Hrs/wk', self.week_hour_max)
         print('Minimum Hrs/wk', self.week_hour_min)
 
-    def plot_hours(self):
+    def plot_hours(self, output_path):
         hours_max = 60 # default to 60hours max
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(1,1,1)
         ax1.set_ylim(0, hours_max)
         ax1.bar(self.week_num, self.week_hours)
         plt.title(self.resource)
-        plt.savefig('output/' + self.resource )
+        output_file = os.path.join(output_path, self.resource)
+        plt.savefig(output_file)
